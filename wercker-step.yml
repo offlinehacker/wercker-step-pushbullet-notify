@@ -1,0 +1,6 @@
+name: pushbullet-notify
+version: 0.0.1
+description: Send a message with Pushbullet.
+keywords:
+  - pushbullet
+  - push notification
