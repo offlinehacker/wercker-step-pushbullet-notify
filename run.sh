@@ -1,26 +1,73 @@
-#!/bin/sh
+if [ ! -n "$WERCKER_PUSHBULLET_NOTIFY_TOKEN" ]
+then
+    error "missing access token, please check your wercker.yml"
+    exit 1
+fi
 
-validate_params() {
-    if [ ! -n "$WERCKER_PUSHBULLET_NOTIFY_ACCESS_TOKEN" ]
-    then
-        fail "missing access token, please check your wercker.yml"
+if [ ! -n "$WERCKER_PUSHBULLET_NOTIFY_CHANNEL" ]
+then
+    error "missing channel name, please check your wercker.yml"
+    exit 1
+fi
+
+if [ ! -n "$WERCKER_PUSHBULLET_NOTIFY_FAILED_MESSAGE" ]; then
+    if [ ! -n "$DEPLOY" ]; then
+        export WERCKER_PUSHBULLET_NOTIFY_FAILED_MESSAGE="$WERCKER_APPLICATION_OWNER_NAME/$WERCKER_APPLICATION_NAME build of $WERCKER_GIT_BRANCH by $WERCKER_STARTED_BY failed."
+    else
+        export WERCKER_PUSHBULLET_NOTIFY_FAILED_MESSAGE="$WERCKER_APPLICATION_OWNER_NAME/$WERCKER_APPLICATION_NAME deploy to $WERCKER_DEPLOYTARGET_NAME by $WERCKER_STARTED_BY failed."
     fi
+fi
 
-    if [ ! -n "$WERCKER_PUSHBULLET_NOTIFY_TITLE" ]
-    then
-        fail "missing title, please check your wercker.yml"
+if [ ! -n "$WERCKER_PUSHBULLET_NOTIFY_PASSED_MESSAGE" ]; then
+    if [ ! -n "$DEPLOY" ]; then
+        export WERCKER_PUSHBULLET_NOTIFY_PASSED_MESSAGE="$WERCKER_APPLICATION_OWNER_NAME/$WERCKER_APPLICATION_NAME build of $WERCKER_GIT_BRANCH by $WERCKER_STARTED_BY passed."
+    else
+        export WERCKER_PUSHBULLET_NOTIFY_PASSED_MESSAGE="$WERCKER_APPLICATION_OWNER_NAME/$WERCKER_APPLICATION_NAME deploy to $WERCKER_DEPLOYTARGET_NAME by $WERCKER_STARTED_BY passed."
     fi
+fi
 
-    if [ ! -n "$WERCKER_PUSHBULLET_NOTIFY_BODY" ]
-    then
-        fail "missing body, please check your wercker.yml"
+if [ ! -n "$WERCKER_PUSHBULLET_NOTIFY_FAILED_TITLE" ]; then
+    if [ ! -n "$DEPLOY" ]; then
+        export WERCKER_PUSHBULLET_NOTIFY_FAILED_TITLE="Build failed"
+    else
+        export WERCKER_PUSHBULLET_NOTIFY_FAILED_TITLE="Deploy failed"
     fi
-}
+fi
 
-validate_params
+if [ ! -n "$WERCKER_PUSHBULLET_NOTIFY_PASSED_TITLE" ]; then
+    if [ ! -n "$DEPLOY" ]; then
+        export WERCKER_PUSHBULLET_NOTIFY_PASSED_TITLE="Build passed"
+    else
+        export WERCKER_PUSHBULLET_NOTIFY_PASSED_TITLE="Build passed"
+    fi
+fi
 
-curl -u ${WERCKER_PUSHBULLET_NOTIFY_ACCESS_TOKEN}: \
-    -d type=note \
-    -d title=$WERCKER_PUSHBULLET_NOTIFY_TITLE \
-    -d body=$WERCKER_PUSHBULLET_NOTIFY_BODY \
+if [ ! -n "$DEPLOY" ]; then
+    export WERCKER_PUSHBULLET_NOTIFY_URL="$WERCKER_BUILD_URL"
+else
+    export WERCKER_PUSHBULLET_NOTIFY_URL="$WERCKER_DEPLOY_URL"
+fi
+
+if [ "$WERCKER_RESULT" = "passed" ]; then
+  export WERCKER_PUSHBULLET_NOTIFY_MESSAGE="$WERCKER_PUSHBULLET_NOTIFY_PASSED_MESSAGE" 
+  export WERCKER_PUSHBULLET_NOTIFY_TITLE="$WERCKER_PUSHBULLET_NOTIFY_PASSED_TITLE"
+else
+  export WERCKER_PUSHBULLET_NOTIFY_MESSAGE="$WERCKER_PUSHBULLET_NOTIFY_FAILED_MESSAGE"
+  export WERCKER_PUSHBULLET_NOTIFY_TITLE="$WERCKER_PUSHBULLET_NOTIFY_FAILED_TITLE"
+fi
+
+
+if [ "$WERCKER_PUSHBULLET_NOTIFY_ON" = "failed" ]; then
+    if [ "$WERCKER_RESULT" = "passed" ]; then
+        echo "Skipping..."
+        return 0
+    fi
+fi
+
+curl -u ${WERCKER_PUSHBULLET_NOTIFY_TOKEN}: \
+    -d type=link \
+    -d title="$WERCKER_PUSHBULLET_NOTIFY_TITLE" \
+    -d body="$WERCKER_PUSHBULLET_NOTIFY_MESSAGE" \
+    -d url="$WERCKER_PUSHBULLET_NOTIFY_URL" \
+    -d channel_tag="$WERCKER_PUSHBULLET_NOTIFY_CHANNEL" \
     https://api.pushbullet.com/v2/pushes

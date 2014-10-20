@@ -2,5 +2,24 @@ name: pushbullet-notify
 version: 0.0.1
 description: Send a message with Pushbullet.
 keywords:
+  - notification
   - pushbullet
   - push notification
+properties:
+  token:
+    type: string
+    required: true
+  channel:
+    type: string
+    required: true
+  failed-message:
+    type: string
+  passed-message:
+    type: string
+  failed-title:
+    type: string
+  passed-title:
+    type: string
+  on:
+    type: string
+    default: always
