@@ -38,7 +38,7 @@ if [ ! -n "$WERCKER_PUSHBULLET_NOTIFY_PASSED_TITLE" ]; then
     if [ ! -n "$DEPLOY" ]; then
         export WERCKER_PUSHBULLET_NOTIFY_PASSED_TITLE="Build passed"
     else
-        export WERCKER_PUSHBULLET_NOTIFY_PASSED_TITLE="Build passed"
+        export WERCKER_PUSHBULLET_NOTIFY_PASSED_TITLE="Deploy passed"
     fi
 fi
 
